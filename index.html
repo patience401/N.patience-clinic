@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patience's Clinic Care | Digital Patient Check-in System</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="app-container">
+            <!-- Sidebar Navigation -->
+            <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
+                <div class="sidebar-header">
+                    <div class="logo">
+                        <i class="fas fa-heartbeat"></i>
+                        <h2>Patience's<br>Clinic Care</h2>
+                    </div>
+                    <p class="tagline">Digital Patient check-in system</p>
+                    <div class="offline-badge" v-if="offlineMode">
+                        <i class="fas fa-wifi-slash"></i> OFFLINE
+                    </div>
+                </div>
+                
+                <nav class="sidebar-nav">
+                    <a href="#" class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click.prevent="currentPage = 'dashboard'">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-item" :class="{ active: currentPage === 'checkin' }" @click.prevent="currentPage = 'checkin'">
+                        <i class="fas fa-notes-medical"></i>
+                        <span>Check-in</span>
+                    </a>
+                    <a href="#" class="nav-item" :class="{ active: currentPage === 'patients' }" @click.prevent="currentPage = 'patients'">
+                        <i class="fas fa-users"></i>
+                        <span>Patients</span>
+                    </a>
+                    <a href="#" class="nav-item" :class="{ active: currentPage === 'appointments' }" @click.prevent="currentPage = 'appointments'">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Appointments</span>
+                    </a>
+                    <a href="#" class="nav-item" :class="{ active: currentPage === 'reports' }" @click.prevent="currentPage = 'reports'">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Reports</span>
+                    </a>
+                    <a href="#" class="nav-item" :class="{ active: currentPage === 'settings' }" @click.prevent="currentPage = 'settings'">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </nav>
+                
+                <div class="sidebar-footer">
+                    <a href="#" class="nav-item" @click.prevent="backupData">
+                        <i class="fas fa-database"></i>
+                        <span>BackUp Data</span>
+                    </a>
+                    <a href="#" class="nav-item" @click.prevent="showAbout">
+                        <i class="fas fa-info-circle"></i>
+                        <span>About</span>
+                    </a>
+                    <div class="offline-status">
+                        <i class="fas fa-circle" :class="{ offline: offlineMode, online: !offlineMode }"></i>
+                        <span>{{ offlineMode ? 'You are working OFFLINE' : 'You are working ONLINE' }}</span>
+                    </div>
+                    <div class="storage-info">
+                        <i class="fas fa-database"></i>
+                        <span>All data is stored locally on this device</span>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Dashboard View -->
+                <div v-if="currentPage === 'dashboard'" class="page-content">
+                    <!-- Welcome Banner -->
+                    <div class="welcome-banner">
+                        <h1>Welcome back, Dr. Patience!</h1>
+                        <p>Here's what's happening at your clinic today</p>
+                    </div>
+                    
+                    <!-- Stats Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fas fa-calendar-alt"></i>
+                            <div class="stat-info">
+                                <span class="stat-label">Date</span>
+                                <span class="stat-value">{{ currentDate }}</span>
+                            </div>
+                        </div>
+                        <div class="stat-card primary">
+                            <i class="fas fa-users"></i>
+                            <div class="stat-info">
+                                <span class="stat-label">Total Checked-in</span>
+                                <span class="stat-value">{{ totalCheckedIn }}</span>
+                            </div>
+                        </div>
+                        <div class="stat-card warning">
+                            <i class="fas fa-clock"></i>
+                            <div class="stat-info">
+                                <span class="stat-label">Waiting</span>
+                                <span class="stat-value">{{ waitingCount }}</span>
+                            </div>
+                        </div>
+                        <div class="stat-card success">
+                            <i class="fas fa-check-circle"></i>
+                            <div class="stat-info">
+                                <span class="stat-label">Served</span>
+                                <span class="stat-value">{{ servedCount }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="quick-actions-section">
+                        <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                        <div class="quick-actions-grid">
+                            <button class="quick-action" @click="currentPage = 'checkin'">
+                                <i class="fas fa-search"></i>
+                                <span>Search patient</span>
+                            </button>
+                            <button class="quick-action" @click="viewQueue">
+                                <i class="fas fa-eye"></i>
+                                <span>View cue</span>
+                            </button>
+                            <button class="quick-action" @click="currentPage = 'appointments'">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Appointments</span>
+                            </button>
+                            <button class="quick-action" @click="currentPage = 'reports'">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Reports</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Patients -->
+                    <div class="recent-patients">
+                        <h3><i class="fas fa-history"></i> Recent Check-ins</h3>
+                        <div class="patient-list">
+                            <div v-for="patient in recentPatients" :key="patient.id" class="patient-item">
+                                <div class="patient-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="patient-details">
+                                    <strong>{{ patient.name }}</strong>
+                                    <span>Queue #{{ patient.queueNumber }}</span>
+                                </div>
+                                <span :class="['status-badge', patient.status]">{{ patient.status }}</span>
+                            </div>
+                            <div v-if="recentPatients.length === 0" class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>No patients checked in yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Check-in View -->
+                <div v-if="currentPage === 'checkin'" class="page-content">
+                    <div class="checkin-container">
+                        <div class="checkin-header">
+                            <h1><i class="fas fa-notes-medical"></i> Patient Check-In</h1>
+                            <p>Register a new patient or check in an existing patient</p>
+                        </div>
+                        
+                        <div class="checkin-form">
+                            <h3>Patient Information</h3>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label><strong>Full name:</strong></label>
+                                    <input type="text" v-model="patient.name" placeholder="Enter full name ...">
+                                </div>
+                                <div class="form-group">
+                                    <label><strong>Enter full name:</strong></label>
+                                    <input type="text" v-model="patient.name" placeholder="Enter full name ...">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label><strong>Date of birth:</strong></label>
+                                    <input type="text" v-model="patient.dob" placeholder="DD/mm/YYYY">
+                                </div>
+                                <div class="form-group">
+                                    <label><strong>Phone Number:</strong></label>
+                                    <input type="tel" v-model="patient.phone" placeholder="Enter phone number...">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label><strong>National ID:</strong></label>
+                                    <input type="text" v-model="patient.nationalID" placeholder="11-digit ID number" maxlength="11">
+                                </div>
+                                <div class="form-group">
+                                    <label><strong>Enter phone number:</strong></label>
+                                    <input type="tel" v-model="patient.phone" placeholder="Enter phone number...">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label><strong>Notes (optional):</strong></label>
+                                <textarea v-model="patient.notes" rows="2" placeholder="Enter the notes about the patient ..."></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label><strong>Age:</strong></label>
+                                    <input type="number" v-model="patient.age" placeholder="Enter Age...">
+                                </div>
+                                <div class="form-group">
+                                    <label><strong>Gender:</strong></label>
+                                    <select v-model="patient.gender">
+                                        <option value="">Select gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label><strong>Patient status:</strong></label>
+                                <div class="status-radio-group">
+                                    <label class="radio-label">
+                                        <input type="radio" value="new" v-model="patient.type">
+                                        <span>NEW</span>
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" value="returning" v-model="patient.type">
+                                        <span>Returning</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <button class="register-btn" @click="registerPatient">
+                                <i class="fas fa-check-circle"></i> Register Patient
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Offline mode and New Patient links -->
+                    <div class="action-footer">
+                        <button class="action-link" @click="toggleOfflineMode">
+                            <i class="fas fa-cloud-download-alt"></i> Offline mode
+                        </button>
+                        <button class="action-link" @click="resetForm">
+                            <i class="fas fa-user-plus"></i> New Patient
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Patients View -->
+                <div v-if="currentPage === 'patients'" class="page-content">
+                    <div class="patients-container">
+                        <h1><i class="fas fa-users"></i> Patient Management</h1>
+                        
+                        <div class="search-bar">
+                            <i class="fas fa-search"></i>
+                            <input type="text" v-model="searchQuery" placeholder="Search patients by name or ID...">
+                        </div>
+                        
+                        <div class="patients-table-container">
+                            <table class="patients-table">
+                                <thead>
+                                    <tr>
+                                        <th>Queue #</th>
+                                        <th>Name</th>
+                                        <th>Age/Gender</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th>Check-in Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="patient in filteredPatients" :key="patient.id">
+                                        <td><span class="queue-num">#{{ patient.queueNumber }}</span></td>
+                                        <td>
+                                            <strong>{{ patient.name }}</strong>
+                                            <small>{{ patient.nationalID }}</small>
+                                        </td>
+                                        <td>{{ patient.age || '-' }} / {{ patient.gender || '-' }}</td>
+                                        <td>{{ patient.phone || '-' }}</td>
+                                        <td>
+                                            <span :class="['status-badge-sm', patient.status]">
+                                                {{ patient.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ patient.checkinTime }}</td>
+                                        <td>
+                                            <button class="action-btn serve" @click="servePatient(patient.id)" v-if="patient.status === 'waiting'">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="action-btn delete" @click="deletePatient(patient.id)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                         </td>
+                                    </tr>
+                                    <tr v-if="filteredPatients.length === 0">
+                                        <td colspan="7" class="text-center">No patients found</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Appointments View -->
+                <div v-if="currentPage === 'appointments'" class="page-content">
+                    <div class="appointments-container">
+                        <h1><i class="fas fa-calendar-alt"></i> Appointments</h1>
+                        <div class="appointment-list">
+                            <div class="appointment-item" v-for="apt in appointments" :key="apt.id">
+                                <div class="appointment-date">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <strong>{{ apt.date }}</strong>
+                                </div>
+                                <div class="appointment-info">
+                                    <h4>{{ apt.patientName }}</h4>
+                                    <p>{{ apt.reason }}</p>
+                                </div>
+                                <div class="appointment-time">
+                                    <i class="fas fa-clock"></i>
+                                    <span>{{ apt.time }}</span>
+                                </div>
+                            </div>
+                            <div v-if="appointments.length === 0" class="empty-state">
+                                <i class="fas fa-calendar-plus"></i>
+                                <p>No appointments scheduled</p>
+                                <button class="btn-primary" @click="addSampleAppointment">+ Add Appointment</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reports View -->
+                <div v-if="currentPage === 'reports'" class="page-content">
+                    <div class="reports-container">
+                        <h1><i class="fas fa-chart-line"></i> Clinic Reports</h1>
+                        
+                        <div class="report-cards">
+                            <div class="report-card">
+                                <i class="fas fa-users"></i>
+                                <div class="report-stats">
+                                    <span>Total Patients</span>
+                                    <strong>{{ totalCheckedIn }}</strong>
+                                </div>
+                            </div>
+                            <div class="report-card">
+                                <i class="fas fa-chart-line"></i>
+                                <div class="report-stats">
+                                    <span>Completion Rate</span>
+                                    <strong>{{ completionRate }}%</strong>
+                                </div>
+                            </div>
+                            <div class="report-card">
+                                <i class="fas fa-clock"></i>
+                                <div class="report-stats">
+                                    <span>Avg. Wait Time</span>
+                                    <strong>{{ avgWaitTime }} min</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detailed-report">
+                            <h3>Daily Summary</h3>
+                            <div class="summary-item">
+                                <span>Date:</span>
+                                <span>{{ currentDate }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Total Checked-in:</span>
+                                <span>{{ totalCheckedIn }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Currently Waiting:</span>
+                                <span>{{ waitingCount }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Patients Served:</span>
+                                <span>{{ servedCount }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>New Patients:</span>
+                                <span>{{ newPatientsCount }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Returning Patients:</span>
+                                <span>{{ returningCount }}</span>
+                            </div>
+                        </div>
+                        
+                        <button class="export-btn" @click="exportReport">
+                            <i class="fas fa-download"></i> Export Report
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Settings View -->
+                <div v-if="currentPage === 'settings'" class="page-content">
+                    <div class="settings-container">
+                        <h1><i class="fas fa-cog"></i> Settings</h1>
+                        
+                        <div class="settings-group">
+                            <h3>Clinic Information</h3>
+                            <div class="setting-item">
+                                <label>Clinic Name</label>
+                                <input type="text" v-model="clinicSettings.name" placeholder="Patience's Clinic Care">
+                            </div>
+                            <div class="setting-item">
+                                <label>Contact Email</label>
+                                <input type="email" v-model="clinicSettings.email">
+                            </div>
+                            <div class="setting-item">
+                                <label>Contact Phone</label>
+                                <input type="tel" v-model="clinicSettings.phone">
+                            </div>
+                        </div>
+                        
+                        <div class="settings-group">
+                            <h3>Preferences</h3>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" v-model="clinicSettings.autoSave">
+                                    Auto-save patient data
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" v-model="clinicSettings.notifications">
+                                    Enable notifications
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-group">
+                            <h3>Data Management</h3>
+                            <button class="danger-btn" @click="clearAllData">
+                                <i class="fas fa-trash-alt"></i> Clear All Data
+                            </button>
+                            <button class="secondary-btn" @click="exportAllData">
+                                <i class="fas fa-download"></i> Export All Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <footer class="app-footer">
+                    <p>Patience's clinic care – serving our community with care / Version 1.0.0</p>
+                </footer>
+            </main>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
