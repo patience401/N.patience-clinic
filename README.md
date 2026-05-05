@@ -1,3 +1,3 @@
-Niyomwungeri alpha
-Nsengiyumva Patience
+Nsengiyumva Patience ,
+Niyomwungeri alpha and
 Ntwari Assa Benit
